@@ -2,6 +2,7 @@ const { Expr, AliasExpr, OrderExpr } = require('../expr');
 const { Table } = require('../table');
 const { LogicOp } = require('../logic');
 const { Condition } = require('../condition');
+const { Func } = require('../function');
 const _ = require('lodash');
 const genCondition = require('../utils/genCondition');
 const genLogic = require('../utils/genLogic');
@@ -49,6 +50,22 @@ class Query extends AliasExpr {
     }
     return this;
   }
+  join(...table) {
+    this.table = this.table.join(...table);
+    return this;
+  }
+  leftJoin(...table) {
+    this.table = this.table.leftJoin(...table);
+    return this;
+  }
+  rightJoint(...table) {
+    this.table = this.table.rightJoint(...table);
+    return this;
+  }
+  on(...args) {
+    this.table.on(...args);
+    return this;
+  }
   assertTable() {
     if (!this.table) {
       throw new Error('Please define From firstly');
@@ -57,6 +74,9 @@ class Query extends AliasExpr {
   select(...fields) {
     this.assertTable();
     this.fields = this.fields.concat(fields.map((f) => {
+      if (f instanceof AliasExpr) {
+        return f;
+      }
       let field = f;
       let alias = '';
       if (_.isArray(f)) {
@@ -155,6 +175,11 @@ class Query extends AliasExpr {
     }
     this.pagingConfig = { limit, offset, paging: true };
     return this;
+  }
+
+  // built-in functions
+  static count(field) {
+    return new Func('COUNT', field);
   }
 }
 

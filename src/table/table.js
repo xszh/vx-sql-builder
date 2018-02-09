@@ -2,6 +2,7 @@ const { Expr, AliasExpr } = require('../expr');
 const { Field, StarField } = require('../field');
 const _ = require('lodash');
 const JOIN_TYPES = require('../utils/joinType');
+const { Condition } = require('../condition');
 
 class SingleTable extends AliasExpr {
   constructor(table, alias) {
@@ -62,9 +63,23 @@ class Table extends Expr {
   rightJoin(table) {
     return this.createJoin(JOIN_TYPES.RIGHT_OUTER_JOIN)(table);
   }
-  on(condition) {
+  on(condition, rhs) {
     if (this.joinTable) {
-      this.joinTable.on = new Expr(condition);
+      if (condition instanceof Condition) {
+        this.joinTable.on = condition;
+      } else if (typeof rhs !== 'undefined') {
+        let left = condition;
+        let right = rhs;
+        if (_.isString(left)) {
+          left = this.col(left);
+        }
+        if (_.isString(right)) {
+          right = this.col(right);
+        }
+        this.joinTable.on = left.equal(right);
+      } else {
+        this.joinTable.on = new Expr(condition);
+      }
       return this;
     }
     throw new Error('ON CANNOT BE CALLED WITHOUT JOIN');

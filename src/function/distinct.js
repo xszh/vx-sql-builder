@@ -1,4 +1,4 @@
-const Expr = require('../expr');
+const { Expr } = require('../expr');
 
 class Distinct extends Expr {
   constructor(field) {

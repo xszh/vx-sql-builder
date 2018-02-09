@@ -1,9 +1,12 @@
-const { Expr } = require('../expr');
+const { Expr, AliasExpr } = require('../expr');
 
 class Field extends Expr {
   constructor(field, table) {
     super(field);
     this.table = table;
+  }
+  as(alias) {
+    return new AliasExpr(this, alias);
   }
   toSQL() {
     const expr = new Expr(this.expr);
