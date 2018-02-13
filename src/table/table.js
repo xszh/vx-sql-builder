@@ -5,12 +5,13 @@ const JOIN_TYPES = require('../utils/joinType');
 const { Condition } = require('../condition');
 
 class SingleTable extends AliasExpr {
-  constructor(table, alias) {
+  constructor(table, alias, schema) {
     if (table instanceof SingleTable) {
       return table;
     }
     super(table, alias);
     this.cols = [];
+    this.schema = schema;
   }
   add(col) {
     this.cols.push(col);
@@ -24,10 +25,23 @@ class SingleTable extends AliasExpr {
   has(col) {
     return !!this.cols.find(v => v === col);
   }
+  toSQL() {
+    let name = this.expr instanceof Expr ? this.expr.toSQL() : this.expr;
+    if (this.schema) {
+      name = `${this.schema}.${name}`;
+    }
+    if (this.alias) {
+      if (!this.literal) {
+        return `(${name}) as ${this.alias}`;
+      }
+      return `${name} as ${this.alias}`;
+    }
+    return name;
+  }
 }
 
 class Table extends Expr {
-  constructor(table, alias) {
+  constructor(table, alias, schema) {
     super(table);
     this.tables = [];
     if (table instanceof Table) {
@@ -36,7 +50,7 @@ class Table extends Expr {
       this.tables = table;
     } else {
       this.tables.push({
-        table: new SingleTable(table, alias),
+        table: new SingleTable(table, alias, schema),
       });
     }
     this.joinTable = null;
